@@ -22,7 +22,7 @@ const PDFViewer = forwardRef(({ highlight }, ref) => {
   // Debounced zoom used for rendering PDF (improves performance)
   const [renderScale, setRenderScale] = useState(1.2);
 
-  const MIN_SCALE = 0.6;
+  const MIN_SCALE = 0.4;
   const MAX_SCALE = 3.0;
 
   // Smooth debouncing (avoid rerendering every frame)
