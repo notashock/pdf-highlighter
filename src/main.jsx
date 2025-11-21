@@ -4,7 +4,7 @@ import "react-pdf/dist/Page/TextLayer.css";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "../node_modules/react-pdf/dist/pdf.worker.entry.js",
+  "/pdf.worker.mjs",
   import.meta.url
 ).toString();
 import { StrictMode } from 'react'
