@@ -1,16 +1,57 @@
-# React + Vite
+# 📄 Maersk PDF Analysis Web App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This web application displays the **Maersk Q2 2025 Interim Report** alongside an interactive analysis panel.  
+It enables reference-based navigation between sections of the analysis and the PDF, highlighting specific text dynamically.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features
 
-## React Compiler
+### ✅ PDF Rendering
+- Displays the Maersk Q2 2025 PDF using **react-pdf**.
+- Supports multi-page rendering with smooth scrolling.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### ✅ Reference → PDF Linking
+- The analysis panel includes references like **[1] [2] [3]**.
+- Clicking a reference scrolls the PDF to the correct page.
+- Highlights the exact corresponding text inside the PDF.
+- Works even when the text spans across multiple PDF.js `<span>` layers.
 
-## Expanding the ESLint configuration
+### ✅ Smart Highlight System
+- Custom overlay-based text highlighting.
+- Accurate multi-span match detection.
+- Re-positions highlights correctly after zooming.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### ✅ Zooming
+- **Pinch-to-zoom** on mobile (two-finger gesture).
+- **Zoom In / Zoom Out** using Lucide React icons.
+- **Fit to Width** and **Fit to Page** utility buttons.
+
+### ✅ Responsive Split Layout
+- **Desktop:** Side-by-side PDF + Analysis panel with a **draggable resizer**.
+- **Mobile:** Stacked layout (PDF on top, Analysis below).
+- Smooth resizing with width constraints for better UX.
+
+### ✅ TailwindCSS Styling
+- Fully styled using Tailwind utility classes.
+- Clean, modern UI with subtle shadows and spacing.
+- Custom slim scrollbars (no arrow buttons).
+
+---
+
+## 🛠️ Tech Stack
+
+- **React + Vite**  
+- **react-pdf** (PDF viewer)
+- **TailwindCSS** (styling)
+- **Lucide React** (icons)
+- **Custom text highlight engine** (built on top of PDF.js)
+
+---
+
+## 📦 Development
+
+Install dependencies:
+
+```bash
+npm install
