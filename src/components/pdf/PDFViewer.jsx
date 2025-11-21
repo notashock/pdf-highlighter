@@ -16,23 +16,40 @@ const PDFViewer = forwardRef(({ highlight }, ref) => {
   const pageRefs = useRef([]);
   const [numPages, setNumPages] = useState(null);
 
+  // Actual display zoom (smooth zoom)
   const [scale, setScale] = useState(1.2);
+
+  // Debounced zoom used for rendering PDF (improves performance)
+  const [renderScale, setRenderScale] = useState(1.2);
+
   const MIN_SCALE = 0.6;
   const MAX_SCALE = 3.0;
 
-  // Expose scrollToPage
+  // Smooth debouncing (avoid rerendering every frame)
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setRenderScale(scale);
+    }, 120);
+    return () => clearTimeout(id);
+  }, [scale]);
+
+  // -----------------------------------------------------
+  // Expose scrollToPage API
+  // -----------------------------------------------------
   useImperativeHandle(ref, () => ({
     scrollToPage: (pageNumber) => {
       const pageDiv = pageRefs.current[pageNumber - 1];
-      if (pageDiv) pageDiv.scrollIntoView({ behavior: "smooth" });
+      if (pageDiv && containerRef.current) {
+        pageDiv.scrollIntoView({ behavior: "smooth" });
+      }
     },
   }));
 
-  // ============================================
-  // 🚀 Advanced Smooth Pinch-to-Zoom (Mobile)
-  // ============================================
+  // =====================================================
+  // Pinch-to-zoom (Mobile) — Smooth and no browser zoom
+  // =====================================================
   let initialDistance = null;
-  let lastScale = null;
+  let initialScale = null;
 
   const getDistance = (touches) => {
     const [a, b] = touches;
@@ -42,78 +59,89 @@ const PDFViewer = forwardRef(({ highlight }, ref) => {
   const handleTouchStart = (e) => {
     if (e.touches.length === 2) {
       initialDistance = getDistance(e.touches);
-      lastScale = scale;
+      initialScale = scale;
     }
   };
 
   const handleTouchMove = (e) => {
     if (e.touches.length !== 2 || !initialDistance) return;
 
-    e.preventDefault(); // prevent browser zoom
+    // Prevent browser-native pinch zoom
+    e.preventDefault();
 
     const newDistance = getDistance(e.touches);
     const factor = newDistance / initialDistance;
 
-    let next = lastScale * factor;
-    next = Math.min(Math.max(next, MIN_SCALE), MAX_SCALE);
+    let nextScale = initialScale * factor;
+    nextScale = Math.min(Math.max(nextScale, MIN_SCALE), MAX_SCALE);
 
-    setScale(next);
+    setScale(nextScale);
   };
 
-  // ============================================
-  // Zoom Button Controls
-  // ============================================
+  // =====================================================
+  // Desktop Zoom Buttons
+  // =====================================================
   const zoomIn = () => setScale((prev) => Math.min(prev + 0.15, MAX_SCALE));
   const zoomOut = () => setScale((prev) => Math.max(prev - 0.15, MIN_SCALE));
 
+  // =====================================================
+  // Fit Buttons
+  // =====================================================
   const fitToWidth = () => {
-    if (!containerRef.current) return;
-    const cw = containerRef.current.clientWidth;
-    setScale(cw / 900);
+    const w = containerRef.current?.clientWidth || 1;
+    setScale(w / 900);
   };
 
   const fitToPage = () => {
-    if (!containerRef.current) return;
-    const ch = containerRef.current.clientHeight;
-    setScale(ch / 1200);
+    const h = containerRef.current?.clientHeight || 1;
+    setScale(h / 1200);
   };
 
-  // ============================================
-  // Reapply Highlight When Zoom Changes
-  // ============================================
+  // =====================================================
+  // Highlight logic (re-run after zoom settles)
+  // =====================================================
   useEffect(() => {
     if (!highlight) return;
 
-    const pageDiv = pageRefs.current[highlight.page - 1];
+    const idx = highlight.page - 1;
+    const pageDiv = pageRefs.current[idx];
     if (!pageDiv) return;
 
-    document.querySelectorAll(".pdf-highlight").forEach((h) => h.remove());
+    const clear = () =>
+      document.querySelectorAll(".pdf-highlight").forEach((el) => el.remove());
+    clear();
 
     const interval = setInterval(() => {
-      const layer = pageDiv.querySelector(".react-pdf__Page__textContent");
-      if (layer && layer.querySelector("span")) {
-        HighlightLayer.searchAndHighlight(layer, highlight.text);
+      const textLayer = pageDiv.querySelector(".react-pdf__Page__textContent");
+      if (textLayer && textLayer.querySelector("span")) {
+        HighlightLayer.searchAndHighlight(textLayer, highlight.text);
         clearInterval(interval);
       }
-    }, 180);
+    }, 200);
 
     return () => clearInterval(interval);
-  }, [highlight, scale]);
+  }, [highlight, renderScale]);
 
-  // ============================================
-  // Render
-  // ============================================
+  // =====================================================
+  // Render Component
+  // =====================================================
   return (
     <div className="h-full w-full flex flex-col bg-gray-100">
 
       {/* Toolbar */}
       <div className="flex items-center gap-2 p-2 bg-white shadow-sm border-b sticky top-0 z-20">
 
-        <button onClick={zoomOut} className="p-1 rounded bg-gray-200 hover:bg-gray-300">
+        <button
+          onClick={zoomOut}
+          className="p-1 rounded bg-gray-200 hover:bg-gray-300"
+        >
           <ZoomOut size={18} />
         </button>
 
-        <button onClick={zoomIn} className="p-1 rounded bg-gray-200 hover:bg-gray-300">
+        <button
+          onClick={zoomIn}
+          className="p-1 rounded bg-gray-200 hover:bg-gray-300"
+        >
           <ZoomIn size={18} />
         </button>
 
@@ -136,12 +164,12 @@ const PDFViewer = forwardRef(({ highlight }, ref) => {
         </span>
       </div>
 
-      {/* PDF Area */}
+      {/* PDF Container */}
       <div
         ref={containerRef}
+        className="overflow-auto flex-1 touch-pan-y touch-pan-x"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
-        className="overflow-auto flex-1 touch-none"  // Ensures browser pinch doesn't interfere
       >
         <Document
           file={pdfFile}
@@ -156,9 +184,10 @@ const PDFViewer = forwardRef(({ highlight }, ref) => {
             >
               <Page
                 pageNumber={i + 1}
-                scale={scale}
-                renderTextLayer
-                renderAnnotationLayer
+                scale={renderScale}
+                renderTextLayer={true}
+                renderAnnotationLayer={true}
+                loading="Loading page…"
               />
             </div>
           ))}
