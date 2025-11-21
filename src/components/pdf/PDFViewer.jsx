@@ -8,7 +8,8 @@ import {
 import { Document, Page } from "react-pdf";
 import { ZoomIn, ZoomOut } from "lucide-react";   // ⬅️ NEW
 import HighlightLayer from "./HighlightLayer";
-import pdfFile from "../../../public/Maersk_Q2_2025_Interim_Report.pdf";
+const pdfFile = "/Maersk_Q2_2025_Interim_Report.pdf";
+
 
 const PDFViewer = forwardRef(({ highlight }, ref) => {
   const containerRef = useRef(null);
